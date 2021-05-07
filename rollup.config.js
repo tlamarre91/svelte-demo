@@ -10,6 +10,7 @@ import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
 import config from 'sapper/config/rollup.js';
 import pkg from './package.json';
+import alias from "@rollup/plugin-alias";
 
 const mode = process.env.NODE_ENV;
 const dev = mode === 'development';
@@ -21,11 +22,19 @@ const onwarn = (warning, onwarn) =>
 	(warning.code === 'THIS_IS_UNDEFINED') ||
 	onwarn(warning);
 
+const aliases = alias({
+  resolve: [".svelte", ".js", ".ts"],
+  entries: [
+    { find: "@", replacement: path.resolve(__dirname, "src") }
+  ]
+});
+
 export default {
 	client: {
 		input: config.client.input().replace(/\.js$/, '.ts'),
 		output: config.client.output(),
 		plugins: [
+      aliases,
 			replace({
 				preventAssignment: true,
 				values:{
@@ -81,6 +90,7 @@ export default {
 		input: { server: config.server.input().server.replace(/\.js$/, ".ts") },
 		output: config.server.output(),
 		plugins: [
+      aliases,
 			replace({
 				preventAssignment: true,
 				values:{
