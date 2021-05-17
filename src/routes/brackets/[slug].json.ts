@@ -1,15 +1,15 @@
-// import type { SapperRequest, SapperResponse } from "@sapper/server";
 import type express from "express";
-import { Bracket } from "../../model";
-import db from "../../db";
+import { Bracket } from "@/model";
+import db from "@/db";
 
 export async function get(
   req: express.Request,
   res: express.Response,
   next: () => void
 ) {
-  const { id } = req.params;
-  const bracket = await db.getBracket(id);
+  const { slug } = req.params;
+  const bracket = await db.getBracketBySlug(slug);
+  res.json(bracket);
 }
 
 export async function post(
@@ -17,7 +17,7 @@ export async function post(
   res: express.Response,
   next: () => void
 ) {
-  const { id } = req.params;
+  const { slug } = req.params;
   const { body } = req;
 }
 
@@ -26,5 +26,5 @@ export async function del(
   res: express.Response,
   next: () => void
 ) {
-  const { id } = req.params;
+  const { slug } = req.params;
 }

@@ -7,7 +7,6 @@ export async function get(
   res: express.Response,
   next: () => void
 ) {
-  const { id } = req.params;
   const brackets = await db.getAllBrackets();
   // console.log("GET brackets: ", brackets);
   res.json(brackets);

@@ -6,22 +6,19 @@
     const res = await fetch(`brackets/${id}`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: "bar"
-      })
+        name: "bar",
+      }),
     });
     const val = await res.json();
     console.log(val);
   }
 </script>
 
-<style>
-</style>
-
 <svelte:head>
-	<title>{bracketName}</title>
+  <title>{bracketName}</title>
 </svelte:head>
 
 <div class="bracket-page">
@@ -29,4 +26,5 @@
   <button on:click={save}>save</button>
 </div>
 
-
+<style>
+</style>
