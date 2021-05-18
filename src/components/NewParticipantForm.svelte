@@ -1,28 +1,56 @@
 <script lang="ts">
+  import { slide } from "svelte/transition";
+  import { SLIDE_DURATION } from "@/constants";
   import { Participant, makeRandomParticipant } from "@/model";
   import TextInput from "./TextInput.svelte";
   import Button from "./Button.svelte";
   import Checkbox from "./Checkbox.svelte";
-  export let onSubmit: (participant: Participant) => void;
+  export let onSubmit: (participant: Participant) => boolean;
   export let name = "";
+  $: name = generateRandom ? "" : name;
   export let generateRandom = false;
-  export let error = ""; // TODO: show errors
+  export let nameError = "";
+  let placeholder: string;
+  $: placeholder = generateRandom
+    ? "Random participant"
+    : "New participant name";
+  let showError: boolean;
+  $: showError = nameError.length > 0 && !generateRandom;
+
   function submit() {
+    if (!(generateRandom || name.length > 0)) {
+      nameError = "Please provide a name"
+      return;
+    }
+    nameError = "";
     const newParticipant = generateRandom ? makeRandomParticipant() : { name };
-    console.log("new participant", newParticipant);
-    onSubmit(newParticipant);
+    const result = onSubmit(newParticipant);
+    if (result) {
+      name = "";
+    }
   }
 </script>
 
-<form on:submit|preventDefault={submit}>
-  <TextInput bind:value={name} placeholder="New participant name" />
-  <Checkbox label="Generate random participant" bind:checked={generateRandom} />
-  <Button type="submit">Add</Button>
-</form>
+<div>
+  <form on:submit|preventDefault={submit}>
+    <TextInput isDanger={showError} disabled={generateRandom} bind:value={name} {placeholder} />
+    {#if showError}
+      <div class="has-text-danger" transition:slide={{ duration: SLIDE_DURATION }}>
+        {nameError}
+      </div>
+    {/if}
+    <Checkbox
+      label="Generate random participant"
+      bind:checked={generateRandom}
+    />
+    <Button type="submit">Add</Button>
+  </form>
+</div>
 
 <style>
   form {
-    max-width: 20em;
+    padding: 1rem;
+    max-width: 20rem;
     display: flex;
     flex-direction: column;
   }

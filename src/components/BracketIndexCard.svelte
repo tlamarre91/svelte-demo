@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { Bracket } from "@/model";
+  import MediaObject from "./MediaObject.svelte";
   import Button from "./Button.svelte";
   import Columns from "./Columns.svelte";
   import Column from "./Column.svelte";
+
   export let bracket: Bracket;
   let displayName = bracket.name?.length ? bracket.name : "(no name)";
   let displayCreatedAt = new Intl.DateTimeFormat("en-US", {
@@ -14,7 +16,7 @@
 
   let href = `/brackets/${bracket.slug}`;
 
-  const CONFIRM_DELETE_TIMEOUT = 5000;
+  // const CONFIRM_DELETE_TIMEOUT = 5000;
   async function deleteWithConfirmation() {
     if (!confirmDelete) {
       confirmDelete = true;
@@ -32,9 +34,8 @@
   }
 </script>
 
-<!-- TODO: replace div => li -->
-<div class="media bracket-index-card">
-  <div class="media-content">
+<MediaObject>
+  <div slot="media-content">
     <h4><a {href}>{displayName}</a></h4>
     <div class="bracket-fields">
       <span class="field-name">
@@ -45,7 +46,7 @@
       </span>
     </div>
   </div>
-  <div class="media-right">
+  <div slot="media-right">
     <Columns smallMobileGaps>
       {#if confirmDelete}
         <Column>
@@ -73,17 +74,19 @@
       </Column>
     </Columns>
   </div>
-</div>
+</MediaObject>
 
 <style lang="scss">
   h4 {
     font-size: 1.05rem;
     font-weight: bold;
   }
+
   a {
     width: min-content;
     color: inherit;
   }
+
   .bracket-fields {
     .field-name {
       font-style: normal;

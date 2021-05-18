@@ -3,6 +3,7 @@
   import type { Bracket, Participant } from "@/model";
   import Button from "./Button.svelte";
   import ParticipantList from "./ParticipantList.svelte";
+
   export let bracket: Bracket;
   // TODO: is this OK, or will the arrays get out of sync?
   let participants: Participant[] = bracket.participants;

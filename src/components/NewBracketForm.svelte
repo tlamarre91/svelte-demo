@@ -5,6 +5,7 @@
   import TextInput from "./TextInput.svelte";
   import Button from "./Button.svelte";
   import Checkbox from "./Checkbox.svelte";
+
   // TODO: input to set custom URL
   export let name: string = "";
   export let generateParticipants = false;

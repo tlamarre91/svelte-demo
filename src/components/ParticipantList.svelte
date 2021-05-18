@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { fade, fly, slide } from "svelte/transition";
+  import { SLIDE_DURATION } from "@/constants";
   import type { Participant } from "@/model";
   import Button from "./Button.svelte";
   import ParticipantListItem from "./ParticipantListItem.svelte";
   import NewParticipantForm from "./NewParticipantForm.svelte";
+
   export let participants: Participant[];
   export let onChange: (() => void) | undefined = undefined;
   export let editingParticipants = false;
@@ -15,33 +18,55 @@
   function addParticipant(participant: Participant) {
     participants = [...participants, participant];
     onChange?.();
+    return true; // TODO: handle hitting PARTICIPANT_LIMIT
   }
 </script>
 
-<ul class="participant-list">
-  <Button
-    isPrimary={editingParticipants}
-    on:click={() => {
-      // TODO: save added participants without requiring another click
-      editingParticipants = !editingParticipants;
-    }}
-  >
-    {#if editingParticipants}
-      Finish adding participants
-    {:else}
-      Add participants
-    {/if}
-  </Button>
-  {#if editingParticipants}
-    <NewParticipantForm onSubmit={addParticipant} />
+<div class="edit-ui">
+  {#if !editingParticipants}
+    <div transition:slide|local={{ duration: SLIDE_DURATION }}>
+      <Button
+        isPrimary={editingParticipants}
+        on:click={() => {
+          editingParticipants = true;
+        }}
+      >
+        Add participants
+      </Button>
+    </div>
+  {:else}
+    <div transition:slide|local={{ duration: SLIDE_DURATION }}>
+      <NewParticipantForm onSubmit={addParticipant} />
+      <!-- TODO: this button could go in NewParticipantForm -->
+      <Button
+        isPrimary
+        on:click={() => {
+          // TODO: could save added participants without requiring another click.
+          editingParticipants = false;
+        }}
+      >
+        Finish adding participants
+      </Button>
+    </div>
   {/if}
-  {#each participants as participant, index}
+</div>
+<!-- Using participant object as key isn't great but it works for now -->
+<div class="participant-list">
+  {#each participants as participant, index (participant)}
     <ParticipantListItem
       {participant}
       onDelete={() => removeParticipant(index)}
     />
   {/each}
-</ul>
+</div>
 
 <style>
+  .edit-ui {
+    padding: 0.5rem;
+  }
+
+  .participant-list {
+    padding: 1rem;
+    max-width: 20rem;
+  }
 </style>

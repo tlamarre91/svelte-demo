@@ -1,4 +1,6 @@
 <script context="module" lang="ts">
+  import { fly } from "svelte/transition";
+  import { SLIDE_DURATION } from "@/constants";
   import type { Preload } from "@sapper/common";
   import BracketIndex from "@/components/BracketIndex.svelte";
   export const preload: Preload = async function (this, page, session) {

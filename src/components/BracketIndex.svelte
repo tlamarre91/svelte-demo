@@ -21,4 +21,7 @@
     font-size: 1.4rem;
     font-weight: bold;
   }
+
+  .bracket-list {
+  }
 </style>
