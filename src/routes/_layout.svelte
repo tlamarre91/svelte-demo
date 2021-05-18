@@ -1,12 +1,17 @@
 <script lang="ts">
-  /* import "bulma/css/bulma.css"; */ 
+  /* import "bulma/css/bulma.css"; */
   import Nav from "@/components/Nav.svelte";
+  import Container from "@/components/Container.svelte";
   export let segment: string;
 </script>
 
 <Nav {segment} />
 <main>
-  <slot />
+  <section>
+    <Container>
+      <slot />
+    </Container>
+  </section>
 </main>
 
 <style lang="scss" global>

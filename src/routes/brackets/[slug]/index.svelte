@@ -1,24 +1,23 @@
 <script context="module" lang="ts">
   import type { Preload } from "@sapper/common";
-  const preload: Preload = async function (this, page, session) {
+  export const preload: Preload = async function (this, page, session) {
     const res = await this.fetch(`brackets/${page.params.slug}.json`);
-    const bracket = await res.json();
+    const data = await res.json();
     if (res.status == 200) {
-      return { bracket };
+      return { bracket: data };
+    } else {
+      console.error(data?.error);
     }
   };
 </script>
 
 <script lang="ts">
+  import BracketPage from "@/components/BracketPage.svelte";
   import type { Bracket } from "@/model";
   export let bracket: Bracket;
 </script>
 
-<svelte:head>
-  <title>{bracket.name}</title>
-</svelte:head>
-
-<p>view bracket placeholder</p>
+<BracketPage {bracket} />
 
 <style>
 </style>

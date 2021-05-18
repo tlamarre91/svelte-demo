@@ -1,2 +1,1 @@
 declare module "svelte-mui";
-

@@ -7,7 +7,10 @@ const ASSETS = `cache${timestamp}`;
 const to_cache = (shell as string[]).concat(files as string[]);
 const staticAssets = new Set(to_cache);
 
-self.addEventListener("install", (event: ExtendableEvent) => {
+// Cast "install" to `any` because "install", etc are not keyof WindowEventMap
+// TODO: is this an OK thing to do? Maybe submit a PR to Sapper if it can be
+// fixed with better type declarations.
+self.addEventListener("install" as any, (event: ExtendableEvent) => {
   event.waitUntil(
     caches
       .open(ASSETS)
@@ -18,7 +21,7 @@ self.addEventListener("install", (event: ExtendableEvent) => {
   );
 });
 
-self.addEventListener("activate", (event: ExtendableEvent) => {
+self.addEventListener("activate" as any, (event: ExtendableEvent) => {
   event.waitUntil(
     caches.keys().then(async (keys) => {
       // delete old caches
@@ -50,7 +53,7 @@ async function fetchAndCache(request: Request) {
   }
 }
 
-self.addEventListener("fetch", (event: FetchEvent) => {
+self.addEventListener("fetch" as any, (event: FetchEvent) => {
   if (event.request.method !== "GET" || event.request.headers.has("range"))
     return;
 

@@ -1,30 +1,53 @@
 <script lang="ts">
-  export let id: string;
-  export let bracketName: string;
-  let modified: boolean = false;
+  import { postJson } from "@/util";
+  import type { Bracket, Participant } from "@/model";
+  import Button from "./Button.svelte";
+  import ParticipantList from "./ParticipantList.svelte";
+  export let bracket: Bracket;
+  // TODO: is this OK, or will the arrays get out of sync?
+  let participants: Participant[] = bracket.participants;
+  let displayName = bracket.name?.length ? bracket.name : "(no name)";
+  let modified = false;
+  let editingParticipants = false;
+
+  /**
+   * Save the current version of this bracket to the database. For now, we're
+   * not worried about only sending modified properties or any other
+   * optimization.
+   */
   async function save() {
-    const res = await fetch(`brackets/${id}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: "bar",
-      }),
-    });
-    const val = await res.json();
-    console.log(val);
+    bracket.participants = participants;
+    const url = `brackets/${bracket.slug}.json`;
+    const body = JSON.stringify(bracket);
+    const res = await postJson(url, body);
+    if (res.status == 200) {
+      modified = false;
+      // TODO: show clear "success" indicator
+    } else {
+      // TODO: indicate error
+    }
+  }
+
+  async function onChange() {
+    modified = true;
   }
 </script>
 
 <svelte:head>
-  <title>{bracketName}</title>
+  <title>{displayName}</title>
 </svelte:head>
 
 <div class="bracket-page">
-  <input bind:value={bracketName} placeholder="bracket name" />
-  <button on:click={save}>save</button>
+  <h3>{displayName}</h3>
+  <ParticipantList bind:participants bind:editingParticipants {onChange} />
+  <Button isDanger={modified} on:click={save}>save</Button>
 </div>
 
 <style>
+  /* TODO: factor out h3 and such to global style */
+  h3 {
+    padding: 0 0 1rem;
+    font-size: 1.4rem;
+    font-weight: bold;
+  }
 </style>

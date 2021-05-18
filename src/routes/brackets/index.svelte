@@ -3,23 +3,23 @@
   import BracketIndex from "@/components/BracketIndex.svelte";
   export const preload: Preload = async function (this, page, session) {
     const res = await this.fetch(`brackets.json`);
-    const bracket = await res.json();
+    const brackets = await res.json();
     if (res.status == 200) {
-      return { bracket };
+      return { brackets };
     }
   };
 </script>
 
 <script lang="ts">
   import type { Bracket } from "@/model";
-  export let bracket: Bracket;
+  export let brackets: Bracket[];
 </script>
 
 <svelte:head>
-  <title>bracket index</title>
+  <title>My Brackets</title>
 </svelte:head>
 
-<BracketIndex />
+<BracketIndex {brackets} />
 
 <style>
 </style>
