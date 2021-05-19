@@ -1,4 +1,3 @@
-import type mongodb from "mongodb";
 import { generateSlug } from "random-word-slugs";
 
 export class Participant {

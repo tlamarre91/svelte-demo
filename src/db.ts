@@ -2,16 +2,31 @@ import { MongoClient } from "mongodb";
 import { generateSlug } from "random-word-slugs";
 import { Bracket, Participant } from "./model";
 
-const connectionUri = "mongodb://127.0.0.1:27017/?gssapiServiceName=mongodb";
+// TODO: don't repeat dotenv.config() here and in server.ts
+// If we waited to construct a Database until server.ts has run, we wouldn't
+// have to do this.
+import dotenv from "dotenv";
+dotenv.config();
+const { MONGODB_URI } = process.env;
 
+const mongoUrl = MONGODB_URI;
+
+// TODO: now that MONGODB_URI specifies DB name, we shouldn't need this:
 const DB_NAME = "svelte-demo";
 const BRACKETS_COLLECTION = "brackets";
-const BRACKET_LIMIT = 100;
 
+/**
+ * Wrapper for a MongoClient, providing methods for accessing and modifying
+ * data. On connection, if setupDb == true, it will create indexes.
+ */
 export class Database {
   client: MongoClient;
   constructor(setupDb = true) {
-    this.client = new MongoClient(connectionUri, {
+    if (mongoUrl == undefined) {
+      throw new Error("MONGODB_URI environment variable not set");
+    }
+    // console.log("Creating client for database at", mongoUrl);
+    this.client = new MongoClient(mongoUrl, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -83,6 +98,7 @@ export class Database {
   }
 
   async addUserBracket(userId: string, bracket: Bracket) {
+    bracket.userId = userId; // TODO: better validation
     const coll = await this.getCollection(BRACKETS_COLLECTION);
     if (bracket.slug == undefined) {
       const slug = await this.makeUnusedSlug(BRACKETS_COLLECTION);
@@ -164,5 +180,9 @@ export class Database {
   }
 }
 
+/**
+ * Singleton instance of Database. All interaction with the database should go
+ * through this object.
+ */
 const db: Database = new Database();
 export default db;
