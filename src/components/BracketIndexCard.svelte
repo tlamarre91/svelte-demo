@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { fade, slide } from "svelte/transition";
+  import { SLIDE_DURATION } from "@/constants";
   import type { Bracket } from "@/model";
   import MediaObject from "./MediaObject.svelte";
   import Button from "./Button.svelte";
@@ -7,6 +9,7 @@
 
   export let bracket: Bracket;
   let displayName = bracket.name?.length ? bracket.name : "(no name)";
+  // TODO: initial render shows non-local time
   let displayCreatedAt = new Intl.DateTimeFormat("en-US", {
     dateStyle: "short",
     timeStyle: "short",
@@ -47,32 +50,46 @@
     </div>
   </div>
   <div slot="media-right">
-    <Columns smallMobileGaps>
-      {#if confirmDelete}
-        <Column>
-          <Button
-            isSmall
-            on:click={() => {
-              confirmDelete = false;
-            }}
+    <div class="dropdown is-right" class:is-active={confirmDelete}>
+      <div class="dropdown-menu">
+        {#if confirmDelete}
+          <div
+            class="dropdown-content"
+            transition:slide|local={{ duration: SLIDE_DURATION }}
           >
-            Cancel
-          </Button>
-        </Column>
-      {/if}
-      <Column>
+            <div class="dropdown-item">
+              <Button
+                isSmall
+                on:click={() => {
+                  confirmDelete = false;
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+            <div class="dropdown-item">
+              <Button
+                isDanger={confirmDelete}
+                isSmall
+                on:click={deleteWithConfirmation}
+              >
+                Delete this bracket!
+              </Button>
+            </div>
+          </div>
+        {/if}
+      </div>
+      <div class="dropdown-trigger">
         <Button
-          isDelete={!confirmDelete}
+          isDelete
           isDanger={confirmDelete}
           isSmall
-          on:click={deleteWithConfirmation}
-        >
-          {#if confirmDelete}
-            Delete this bracket!
-          {/if}
-        </Button>
-      </Column>
-    </Columns>
+          on:click={() => {
+            confirmDelete = !confirmDelete;
+          }}
+        />
+      </div>
+    </div>
   </div>
 </MediaObject>
 
@@ -87,6 +104,11 @@
     color: inherit;
   }
 
+  a:hover {
+    color: rgba(62, 62, 200, 1);
+    text-decoration: underline;
+  }
+
   .bracket-fields {
     .field-name {
       font-style: normal;
@@ -95,5 +117,9 @@
     .field-value {
       color: inherit;
     }
+  }
+
+  :global(.dropdown-content button) {
+    width: 100%;
   }
 </style>

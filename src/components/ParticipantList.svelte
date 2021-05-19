@@ -35,7 +35,10 @@
       </Button>
     </div>
   {:else}
-    <div transition:slide|local={{ duration: SLIDE_DURATION }}>
+    <div
+      class="new-participant-form-container"
+      transition:slide|local={{ duration: SLIDE_DURATION }}
+    >
       <NewParticipantForm onSubmit={addParticipant} />
       <!-- TODO: this button could go in NewParticipantForm -->
       <Button
@@ -68,5 +71,9 @@
   .participant-list {
     padding: 1rem;
     max-width: 20rem;
+  }
+
+  .new-participant-form-container {
+    padding: 1rem;
   }
 </style>

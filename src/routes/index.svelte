@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-  <title>elovate demo</title>
+  <title>Elovate with Svelte</title>
 </svelte:head>
 
 <p>How about creating a new bracket?</p>

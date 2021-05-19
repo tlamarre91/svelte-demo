@@ -1,12 +1,13 @@
 <script lang="ts">
   import { postJson } from "@/util";
-  import type { Bracket, Participant } from "@/model";
+  import type { Bracket, Participant, Match } from "@/model";
   import Button from "./Button.svelte";
   import ParticipantList from "./ParticipantList.svelte";
 
   export let bracket: Bracket;
-  // TODO: is this OK, or will the arrays get out of sync?
   let participants: Participant[] = bracket.participants;
+  let matches: Match[] = bracket.matches;
+  let finalizedAt = bracket.finalizedAt;
   let displayName = bracket.name?.length ? bracket.name : "(no name)";
   let modified = false;
   let editingParticipants = false;
@@ -40,8 +41,13 @@
 
 <div class="bracket-page">
   <h3>{displayName}</h3>
-  <ParticipantList bind:participants bind:editingParticipants {onChange} />
-  <Button isDanger={modified} on:click={save}>save</Button>
+  {#if !finalizedAt}
+    <!-- TODO: factor out "edit bracket details" and "bracket match reporting" views -->
+    <ParticipantList bind:participants bind:editingParticipants {onChange} />
+    <Button isDanger={modified} on:click={save}>save</Button>
+  {:else}
+    match reporting view placeholder
+  {/if}
 </div>
 
 <style>

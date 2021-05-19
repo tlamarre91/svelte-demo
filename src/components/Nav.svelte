@@ -6,27 +6,29 @@
 <nav>
   <ul>
     <li>
-      <a aria-current={segment === undefined ? "page" : undefined} href="."
-        >home</a
-      >
+      <a aria-current={segment === undefined ? "page" : undefined} href=".">
+        Home
+      </a>
     </li>
     <li>
       <a
         aria-current={segment === "brackets" ? "page" : undefined}
-        href="brackets">brackets</a
+        href="brackets"
       >
+        Brackets
+      </a>
     </li>
     <li>
-      <a aria-current={segment === "test" ? "page" : undefined} href="test"
-        >test page</a
-      >
+      <a aria-current={segment === "test" ? "page" : undefined} href="test">
+        Test controls
+      </a>
     </li>
   </ul>
 </nav>
 
 <style>
   nav {
-    border-bottom: 1px solid rgba(255, 62, 0, 0.1);
+    border-bottom: 1px solid rgba(62, 62, 200, 0.1);
     font-weight: 300;
     padding: 0 1em;
   }
@@ -58,7 +60,7 @@
     content: "";
     width: calc(100% - 1em);
     height: 2px;
-    background-color: rgb(255, 62, 0);
+    background-color: rgba(62, 62, 200, 1);
     display: block;
     bottom: -1px;
   }

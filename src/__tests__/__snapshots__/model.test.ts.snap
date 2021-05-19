@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Bracket model Smoke test 1`] = `
+Array [
+  Object {
+    "name": "Skinny Balloon",
+  },
+  Object {
+    "name": "Odd Library",
+  },
+  Object {
+    "name": "Savory Candle",
+  },
+  Object {
+    "name": "Square Rose",
+  },
+  Object {
+    "name": "Breezy Truck",
+  },
+  Object {
+    "name": "Wrong Restaurant",
+  },
+  Object {
+    "name": "Moldy Guitar",
+  },
+  Object {
+    "name": "Cuddly Planet",
+  },
+]
+`;

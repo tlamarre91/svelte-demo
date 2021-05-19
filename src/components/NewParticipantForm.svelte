@@ -5,6 +5,7 @@
   import TextInput from "./TextInput.svelte";
   import Button from "./Button.svelte";
   import Checkbox from "./Checkbox.svelte";
+
   export let onSubmit: (participant: Participant) => boolean;
   export let name = "";
   $: name = generateRandom ? "" : name;
@@ -40,7 +41,7 @@
       </div>
     {/if}
     <Checkbox
-      label="Generate random participant"
+      label="Generate random name"
       bind:checked={generateRandom}
     />
     <Button type="submit">Add</Button>
@@ -49,7 +50,7 @@
 
 <style>
   form {
-    padding: 1rem;
+    padding-bottom: 1rem;
     max-width: 20rem;
     display: flex;
     flex-direction: column;
