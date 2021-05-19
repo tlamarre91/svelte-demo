@@ -14,7 +14,6 @@ const dev = NODE_ENV == "development";
 if (JWT_SECRET == undefined) {
   throw new Error("JWT_SECRET environment variable not set");
 }
-
 if (MONGODB_URI == undefined) {
   throw new Error("MONGODB_URI environment variable not set");
 }

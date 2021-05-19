@@ -5,6 +5,12 @@ steps:
 - name: node:14
   entrypoint: yarn
   args: ['build']
+- name: node:14
+  entrypoint: yarn
+  args: ['create-env']
+  env:
+    - 'JWT_SECRET=${_JWT_SECRET}'
+    - 'MONGODB_URI=${_MONGODB_URI}'
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
   args: ['-c', 'gcloud app deploy']
