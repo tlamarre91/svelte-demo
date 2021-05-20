@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type {Bracket, Participant, Event } from "@/model";
+  import type { Bracket, Participant, Match } from "@/model";
   import Column from "./Column.svelte";
   import BracketMatch from "./BracketMatch.svelte";
 
@@ -12,9 +12,7 @@
 </script>
 
 <Column>
-  <div class="bracket-round-column">
-    bracket round column placeholder
-  </div>
+  <div class="bracket-round-column">bracket round column placeholder</div>
 </Column>
 
 <style>

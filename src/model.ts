@@ -12,7 +12,7 @@ export const makeRandomParticipant = (): Participant => ({
   name: generateSlug(2, { format: "title" }),
 });
 
-export type Match = [winnerIndex: number, loserIndex: number];
+export type Match = [winnerIndex: number, loserIndex: number, pending: boolean];
 
 export class Bracket {
   name: string;
@@ -22,7 +22,10 @@ export class Bracket {
   lastModifiedAt: Date;
   finalizedAt: Date | null;
   participants: Participant[];
-  matches: Match[];
+  /**
+   * Map from round number to a list of Matches in that round.
+   */
+  matches: Map<number, Match[]>;
   constructor(opts: Partial<Bracket>) {
     if (opts.userId == undefined) {
       // TODO: just define a type with some optional, some required args
@@ -35,7 +38,7 @@ export class Bracket {
     this.createdAt = opts.createdAt ?? new Date();
     this.lastModifiedAt = opts.lastModifiedAt ?? new Date();
     this.participants = opts.participants ?? [];
-    this.matches = opts.matches ?? [];
+    this.matches = opts.matches ?? new Map();
   }
 
   /**
@@ -52,43 +55,51 @@ export class Bracket {
   }
 
   /**
-   * If a match between these two participant indices has been recorded, return
-   * its index in the matches array. If not, return -1.
+   * If a match between these two participant indices, in this round, has been
+   * recorded, return its index in the matches array. If not, return -1.
    */
-  findMatch(p1: number, p2: number) {
-    return this.matches.findIndex(([ep1, ep2]) => {
-      return (p1 == ep1 && p2 == ep2) || (p2 == ep1 && p1 == ep2);
+  findMatch(p1: number, p2: number, round: number) {
+    const roundMatches = this.matches.get(round);
+    if (roundMatches == undefined) {
+      return -1;
+    }
+    return roundMatches.findIndex(([winner, loser]) => {
+      return (p1 == winner && p2 == loser) || (p2 == winner && p1 == loser);
     });
   }
 
   /**
    * In how many matches has each participant index appeared?
+   *
+   * TODO: instead return Map(participant => [wins, losses]) like countMatches.
    */
-  countAllMatches() {
-    let counts = this.participants.map(() => 0);
-    this.matches.forEach(([mp1, mp2]) => {
-      counts[mp1] += 1;
-      counts[mp2] += 1;
-    });
+  // countAllMatches() {
+  //   let counts = this.participants.map(() => 0);
+  //   this.matches.values().forEach(([winner, loser]) => {
+  //     counts[winner] += 1;
+  //     counts[loser] += 1;
+  //   });
 
-    return counts;
-  }
+  //   return counts;
+  // }
 
-  /**
-   * In how many matches have these specific participant indices appeared?
-   */
-  countMatches(...ps: number[]) {
-    let counts = ps.map(() => 0);
-    ps.forEach((p, pIndex) => {
-      this.matches.forEach(([mp1, mp2]) => {
-        if (mp1 == p || mp2 == p) {
-          counts[pIndex] += 1;
-        }
-      });
-    });
+  // /**
+  //  * Compute [wins, losses] for each participant argument.
+  //  */
+  // countMatches(...pIndices: number[]) {
+  //   let counts = new Map<number, [number, number]>(
+  //     // Initialize a map with 0 wins, 0 losses for each participant index.
+  //     pIndices.map((p) => [p, [0, 0]])
+  //   );
+  //   this.matches.forEach(([winner, loser]) => {
+  //     const wCount = counts.get(winner);
+  //     if (wCount != undefined) wCount[0] += 1;
+  //     const lCount = counts.get(loser);
+  //     if (lCount != undefined) lCount[1] += 1;
+  //   });
 
-    return counts;
-  }
+  //   return counts;
+  // }
 
   /**
    * In which (0-indexed!) round would a hypothetical match between these two participant
@@ -124,16 +135,142 @@ export class Bracket {
   }
 
   /**
-   * Given the current match array, have these participants played the right
-   * number of matches to face each other? e.g. if these participants meet in
-   * round 2 (0-indexed), have they both appeared in 2 matches?
-   *
-   * TODO: really, this should count *wins*
+   * Does our Map of matches have a non-pending match for this participant in this round?
    */
-  matchIsValid([mp1, mp2]: Match) {
-    if (mp1 < 0 || mp2 < 0 || mp1 == mp2) return false;
-    const counts = this.countMatches(mp1, mp2);
-    const round = this.computeMatchRound(mp1, mp2);
-    return counts[0] == round && counts[1] == round;
+  matchExists(round: number, participantIndex: number) {
+    const roundMatches = this.matches.get(round);
+    if (roundMatches == undefined) {
+      return false;
+    }
+    return roundMatches.some(([winner, loser, pending]) => {
+      return (
+        !pending && (participantIndex == winner || participantIndex == loser)
+      );
+    });
+  }
+
+  /**
+   * Does our Map of matches have a *win* for this participant in this round?
+   */
+  winExists(round: number, participantIndex: number) {
+    const roundMatches = this.matches.get(round);
+    if (roundMatches == undefined) {
+      return false;
+    }
+    return roundMatches.some(([winner, loser, pending]) => {
+      return !pending && participantIndex == winner;
+    });
+  }
+
+  /**
+   * Given the current Map of matches, have both of this match's participants
+   * won the right number of rounds to meet each other?
+   */
+  matchIsValid([winner, loser, pending]: Match) {
+    if (winner < 0 || loser < 0 || winner == loser) return false;
+
+    const computedRound = this.computeMatchRound(winner, loser);
+    // Check that we don't already have a match (pending or not) for either
+    // participant in the appropriate round.
+    const cond =
+      this.matchExists(computedRound, winner) ||
+      this.matchExists(computedRound, loser);
+    if (cond) {
+      return false;
+    }
+    // Check that both participants won matches in all the previous rounds.
+    for (let round = 0; round < computedRound; round += 1) {
+      const cond = !(
+        this.winExists(round, winner) && this.winExists(round, loser)
+      );
+      if (cond) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Add a (pending) match to our Map of matches. Don't call this with matches
+   * that have already been played. First, add a pending match, then call
+   * reportMatch.
+   */
+  pushMatch(match: Match) {
+    const [p1, p2, pending] = match;
+    if (!pending) {
+      throw new Error("Can't add a non-pending match with pushMatch.");
+    }
+    const round = this.computeMatchRound(p1, p2);
+    if (!this.matchIsValid(match)) {
+      throw new Error(`Can't push invalid match: ${match}`);
+    }
+    const roundMatches = this.matches.get(round);
+    if (roundMatches == undefined) {
+      this.matches.set(round, [match]);
+    } else {
+      roundMatches.push(match);
+    }
+  }
+
+  /**
+   * Update a pending match with the actual results of the match, after
+   * checking that this operation is valid.
+   */
+  reportMatch(match: Match) {
+    const [p1, p2, _] = match;
+    const computedRound = this.computeMatchRound(p1, p2);
+    // if (pending) {
+    //   const err =
+    //     "Can't call reportMatch with a pending match. First pass this match to pushMatch.";
+    //   throw new Error(err);
+    // }
+    const existingMatchIndex = this.findMatch(p1, p2, computedRound);
+    if (existingMatchIndex == -1) {
+      const err = `Pending match not found in round ${computedRound} for participants ${p1} and ${p2}`;
+      throw new Error(err);
+    }
+    const roundMatches = this.matches.get(computedRound);
+    if (roundMatches == undefined) {
+      // TODO: this check is probably not necessary, since we just called
+      // findMatch and it succeeded.
+      throw new Error(`Error finding match ${match} in round ${computedRound}`);
+    }
+    const existingMatch = roundMatches[existingMatchIndex];
+    const [, , ePending] = existingMatch;
+    if (!ePending) {
+      throw new Error(
+        `Can't report match: match ${existingMatch} in round ${computedRound} is already reported.`
+      );
+    }
+
+    existingMatch[0] = match[0];
+    existingMatch[1] = match[1];
+    existingMatch[2] = false; // Set pending to false.
+  }
+
+  /**
+   * Validate that this bracket is ready to be finalized. If validateOnly is
+   * false, set finalizedAt.
+   */
+  finalize(validateOnly = false) {
+    if (this.finalizedAt) {
+      return; // TODO: should this throw?
+    }
+    const nParticipants = this.participants.length;
+    const lp = Math.log2(nParticipants);
+    if (!Number.isInteger(lp)) {
+      const nextPow = Math.pow(2, Math.ceil(lp));
+      const err = `Number of participants must be a power of 2. (Current count: ${nParticipants}. Add ${
+        nextPow - nParticipants
+      } more.)`;
+      throw new Error(err);
+    }
+
+    if (validateOnly) {
+      return;
+    }
+
+    this.finalizedAt = new Date();
   }
 }

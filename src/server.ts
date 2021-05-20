@@ -30,7 +30,7 @@ app.use(
     resave: false,
     saveUninitialized: true,
     cookie: {
-      secure: false
+      secure: false,
     },
     store: MongoStore.create({
       // TODO: could use existing db connection

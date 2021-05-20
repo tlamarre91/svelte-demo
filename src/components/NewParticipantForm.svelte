@@ -20,7 +20,7 @@
 
   function submit() {
     if (!(generateRandom || name.length > 0)) {
-      nameError = "Please provide a name"
+      nameError = "Please provide a name";
       return;
     }
     nameError = "";
@@ -34,17 +34,28 @@
 
 <div>
   <form on:submit|preventDefault={submit}>
-    <TextInput isDanger={showError} disabled={generateRandom} bind:value={name} {placeholder} />
-    {#if showError}
-      <div class="has-text-danger" transition:slide={{ duration: SLIDE_DURATION }}>
-        {nameError}
-      </div>
-    {/if}
-    <Checkbox
-      label="Generate random name"
-      bind:checked={generateRandom}
-    />
-    <Button type="submit">Add</Button>
+    <div class="field">
+      <TextInput
+        isDanger={showError}
+        disabled={generateRandom}
+        bind:value={name}
+        {placeholder}
+      />
+      {#if showError}
+        <div
+          class="has-text-danger"
+          transition:slide={{ duration: SLIDE_DURATION }}
+        >
+          {nameError}
+        </div>
+      {/if}
+    </div>
+    <div class="field">
+      <Checkbox label="Generate random name" bind:checked={generateRandom} />
+    </div>
+    <div class="field">
+      <Button type="submit">Add</Button>
+    </div>
   </form>
 </div>
 

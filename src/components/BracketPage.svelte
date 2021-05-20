@@ -1,16 +1,14 @@
 <script lang="ts">
   import { postJson } from "@/util";
   import type { Bracket, Participant, Match } from "@/model";
-  import Button from "./Button.svelte";
-  import ParticipantList from "./ParticipantList.svelte";
+  import EditBracket from "./EditBracket.svelte";
+  import ViewBracket from "./ViewBracket.svelte";
 
   export let bracket: Bracket;
   let participants: Participant[] = bracket.participants;
-  let matches: Match[] = bracket.matches;
-  let finalizedAt = bracket.finalizedAt;
-  let displayName = bracket.name?.length ? bracket.name : "(no name)";
+  let finalizedAt: Date | null;
+  $: finalizedAt = bracket.finalizedAt;
   let modified = false;
-  let editingParticipants = false;
 
   /**
    * Save the current version of this bracket to the database. For now, we're
@@ -29,24 +27,19 @@
       // TODO: indicate error
     }
   }
-
-  async function onChange() {
-    modified = true;
-  }
 </script>
 
-<svelte:head>
-  <title>{displayName}</title>
-</svelte:head>
-
 <div class="bracket-page">
-  <h3>{displayName}</h3>
-  {#if !finalizedAt}
-    <!-- TODO: factor out "edit bracket details" and "bracket match reporting" views -->
-    <ParticipantList bind:participants bind:editingParticipants {onChange} />
-    <Button isDanger={modified} on:click={save}>save</Button>
+  {#if finalizedAt}
+    <ViewBracket onSave={save} bind:bracket bind:participants bind:modified />
   {:else}
-    match reporting view placeholder
+    <EditBracket
+      onSave={save}
+      bind:bracket
+      bind:participants
+      bind:modified
+      bind:finalizedAt
+    />
   {/if}
 </div>
 

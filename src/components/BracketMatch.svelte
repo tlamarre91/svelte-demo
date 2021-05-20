@@ -1,20 +1,20 @@
 <script lang="ts">
-  import type { Participant, Event } from "@/model";
+  import type { Participant, Match } from "@/model";
   import Button from "./Button.svelte";
   import BracketMatchParticipant from "./BracketMatchParticipant.svelte";
 
-  export let participant1: Participant | undefined;
-  export let participant2: Participant | undefined;
+  export let participants: Participant[];
+  export let participantIndices: [number, number];
 
-  async function reportWinner(index: number) {
-    let winner: Participant | undefined;
+  async function reportMatch(index: number) {
+    let match: Match;
     switch (index) {
       case 0: {
-        winner = participant1;
+        match = [participantIndices[0], participantIndices[1]];
         break;
       }
       case 1: {
-        winner = participant2;
+        match = [participantIndices[1], participantIndices[0]];
         break;
       }
       default: {
@@ -23,18 +23,18 @@
       }
     }
 
-    console.log("report winner", winner);
+    console.log("report match", match);
   }
 </script>
 
 <div class="bracket-match">
   <BracketMatchParticipant
-    bind:participant={participant1}
-    onClickWinner={() => reportWinner(0)}
+    bind:participant={participants[participantIndices[0]]}
+    onClick={() => reportMatch(0)}
   />
   <BracketMatchParticipant
-    bind:participant={participant2}
-    onClickWinner={() => reportWinner(1)}
+    bind:participant={participants[participantIndices[1]]}
+    onClick={() => reportMatch(1)}
   />
 </div>
 

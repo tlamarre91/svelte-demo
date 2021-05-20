@@ -3,7 +3,7 @@
   import Button from "./Button.svelte";
 
   export let participant: Participant | undefined;
-  export let onClickWinner: () => void;
+  export let onClick: () => void;
 </script>
 
 <div class="bracket-match-participant">

@@ -27,55 +27,21 @@ describe("Bracket model", () => {
     expect(bracket.participants).toMatchSnapshot();
   });
 
-  test("countMatches", () => {
-    const matches: model.Match[] = [
-      [0, 1],
-      [3, 2],
-      [0, 3],
-    ];
-    bracket.matches = matches;
-    expect(bracket.countMatches(0, 1, 2, 3)).toMatchInlineSnapshot(`
-      Array [
-        2,
-        1,
-        1,
-        2,
-      ]
-    `);
-  });
-
-  test("countAllMatches", () => {
-    const matches: model.Match[] = [
-      [1, 0],
-      [2, 3],
-      [1, 2],
-    ];
-    bracket.matches = matches;
-    expect(bracket.countAllMatches()).toMatchInlineSnapshot(`
-      Array [
-        1,
-        2,
-        2,
-        1,
-        0,
-        0,
-        0,
-        0,
-      ]
-    `);
-  });
-
   test("findMatch", () => {
     const matches: model.Match[] = [
-      [1, 0],
-      [2, 3],
-      [1, 2],
+      [0, 1, true],
+      [3, 2, true],
+      [0, 3, true],
     ];
-    bracket.matches = matches;
-    expect(bracket.findMatch(2, 1)).toBe(2);
-    expect(bracket.findMatch(3, 2)).toBe(1);
-    expect(bracket.findMatch(2, 3)).toBe(1);
-    expect(bracket.findMatch(1, 3)).toBe(-1);
+    bracket.pushMatch(matches[0]);
+    bracket.reportMatch(matches[0]);
+    bracket.pushMatch(matches[1]);
+    bracket.reportMatch(matches[1]);
+    bracket.pushMatch(matches[2]);
+    expect(bracket.findMatch(0, 1, 0)).toBe(0);
+    expect(bracket.findMatch(3, 2, 0)).toBe(1);
+    expect(bracket.findMatch(0, 3, 1)).toBe(0);
+    expect(bracket.findMatch(1, 3, 0)).toBe(-1);
   });
 
   test("computeTotalRounds", () => {
@@ -87,7 +53,7 @@ describe("Bracket model", () => {
     expect(bracket.computeTotalRounds()).toBe(5);
   });
 
-  test("computeMatchRound throws with bad arguments", () => {
+  test("computeMatchRound throws with out-of-bounds arguments", () => {
     expect(() =>
       bracket.computeMatchRound(-1, 2)
     ).toThrowErrorMatchingInlineSnapshot(`"Illegal arguments: -1, 2"`);
@@ -128,15 +94,55 @@ describe("Bracket model", () => {
     expect(bracket.computeMatchRound(4, 10)).toBe(3);
   });
 
-  test("matchIsValid", () => {
-    const m1: model.Match = [0, 2];
+  test("winExists returns true when participant has a win in the specified round", () => {
+    const p1 = 0;
+    const p2 = 1;
+    bracket.pushMatch([p1, p2, true]);
+    bracket.reportMatch([p1, p2, false]);
+    expect(bracket.winExists(0, p1)).toBe(true);
+  });
+
+  test("winExists returns false when participant does not have a win in the specified round", () => {
+    const p1 = 0;
+    const p2 = 1;
+    bracket.pushMatch([p1, p2, true]);
+    bracket.reportMatch([p1, p2, false]);
+    expect(bracket.winExists(0, p2)).toBe(false);
+  });
+
+  test("matchIsValid correctly identifies when a match is valid", () => {
+    const m1: model.Match = [0, 2, true];
     // These participants don't meet before they've played 1 round each.
+    console.log("matches:", bracket.matches);
     expect(bracket.matchIsValid(m1)).toBe(false);
-    bracket.matches.push([0, 1]);
-    bracket.matches.push([2, 3]);
+    // bracket.matches.push([0, 1, 0]);
+    // bracket.matches.push([2, 3, 0]);
+    bracket.pushMatch([0, 1, true]);
+    bracket.pushMatch([2, 3, true]);
+    bracket.reportMatch([0, 1, false]);
+    bracket.reportMatch([2, 3, false]);
     expect(bracket.matchIsValid(m1)).toBe(true);
-    bracket.matches.push(m1);
-    // These participants already played their match; the same match won't be valid.
+    bracket.pushMatch(m1);
+    bracket.reportMatch([m1[0], m1[1], true]);
+    // These participants already played their match; the same match won't be valid again.
     expect(bracket.matchIsValid(m1)).toBe(false);
+  });
+
+  test("finalize throws when participant count is not power of 2", () => {
+    bracket.participants.push({ name: "New guy" });
+    expect(() => bracket.finalize()).toThrowErrorMatchingInlineSnapshot(
+      `"Number of participants must be a power of 2. (Current count: 9. Add 7 more.)"`
+    );
+  });
+
+  test("finalize succeeds with a well-formed bracket", () => {
+    bracket.finalize();
+    const diff = Math.abs(Date.now() - bracket.finalizedAt?.getTime()!);
+    expect(diff).toBeLessThanOrEqual(50);
+  });
+
+  test("finalize doesn't actually do anything when validateOnly is true", () => {
+    bracket.finalize(true);
+    expect(bracket.finalizedAt).toBeNull();
   });
 });

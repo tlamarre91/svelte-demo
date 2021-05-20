@@ -31,12 +31,18 @@
 </script>
 
 <form on:submit|preventDefault={save}>
-  <TextInput bind:value={name} placeholder="New bracket name" />
-  <Checkbox
-    label="Generate test participants"
-    bind:checked={generateParticipants}
-  />
-  <Button type="submit">Add</Button>
+  <div class="field">
+    <TextInput bind:value={name} placeholder="New bracket name" />
+  </div>
+  <div class="field">
+    <Checkbox
+      label="Generate test participants"
+      bind:checked={generateParticipants}
+    />
+  </div>
+  <div class="field">
+    <Button type="submit">Add</Button>
+  </div>
 </form>
 
 <style>
