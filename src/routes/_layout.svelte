@@ -13,6 +13,17 @@
     </Container>
   </section>
 </main>
+<footer>
+  <div>
+    <a
+      href="https://github.com/tlamarre91/svelte-demo"
+      target="blank"
+      rel="noreferrer"
+    >
+      github.com/tlamarre91/svelte-demo
+    </a>
+  </div>
+</footer>
 
 <style lang="scss" global>
   @import "bulma/bulma.sass";
@@ -23,5 +34,12 @@
     padding: 2em;
     margin: 0 auto;
     box-sizing: border-box;
+  }
+
+  footer {
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid rgba(62, 62, 200, 0.1);
   }
 </style>

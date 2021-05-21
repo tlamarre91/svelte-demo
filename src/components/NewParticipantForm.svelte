@@ -1,7 +1,7 @@
 <script lang="ts">
   import { slide } from "svelte/transition";
   import { SLIDE_DURATION } from "@/constants";
-  import { Participant, makeRandomParticipant } from "@/model";
+  import { Participant } from "@/model";
   import TextInput from "./TextInput.svelte";
   import Button from "./Button.svelte";
   import Checkbox from "./Checkbox.svelte";
@@ -10,13 +10,13 @@
   export let name = "";
   $: name = generateRandom ? "" : name;
   export let generateRandom = false;
-  export let nameError = "";
+  let nameError = "";
   let placeholder: string;
   $: placeholder = generateRandom
     ? "Random participant"
     : "New participant name";
   let showError: boolean;
-  $: showError = nameError.length > 0 && !generateRandom;
+  $: showError = nameError.length > 0 && !generateRandom && name.length == 0;
 
   function submit() {
     if (!(generateRandom || name.length > 0)) {
@@ -24,7 +24,9 @@
       return;
     }
     nameError = "";
-    const newParticipant = generateRandom ? makeRandomParticipant() : { name };
+    const newParticipant = generateRandom
+      ? Participant.makeRandom()
+      : new Participant({ name });
     const result = onSubmit(newParticipant);
     if (result) {
       name = "";

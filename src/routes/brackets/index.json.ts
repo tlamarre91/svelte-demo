@@ -1,5 +1,5 @@
 import type express from "express";
-import { Bracket, makeRandomParticipant } from "../../model";
+import { Bracket, Participant } from "../../model";
 import db from "../../db";
 
 const GENERATED_PARTICIPANT_COUNT = 8;
@@ -21,7 +21,7 @@ export async function post(
   const bracket = new Bracket({ userId: req.session.id, ...req.body });
   if (req.body.generateParticipants) {
     for (let i = 0; i < GENERATED_PARTICIPANT_COUNT; i += 1) {
-      bracket.participants.push(makeRandomParticipant());
+      bracket.participants.push(Participant.makeRandom());
     }
   }
   await db.addUserBracket(req.session.id, bracket);

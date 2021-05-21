@@ -3,28 +3,52 @@
 exports[`Bracket model Smoke test 1`] = `
 Array [
   Object {
+    "createdAt": "[date]",
+    "lastModifiedAt": "[date]",
     "name": "Skinny Balloon",
+    "removedAt": null,
   },
   Object {
+    "createdAt": "[date]",
+    "lastModifiedAt": "[date]",
     "name": "Odd Library",
+    "removedAt": null,
   },
   Object {
+    "createdAt": "[date]",
+    "lastModifiedAt": "[date]",
     "name": "Savory Candle",
+    "removedAt": null,
   },
   Object {
+    "createdAt": "[date]",
+    "lastModifiedAt": "[date]",
     "name": "Square Rose",
+    "removedAt": null,
   },
   Object {
+    "createdAt": "[date]",
+    "lastModifiedAt": "[date]",
     "name": "Breezy Truck",
+    "removedAt": null,
   },
   Object {
+    "createdAt": "[date]",
+    "lastModifiedAt": "[date]",
     "name": "Wrong Restaurant",
+    "removedAt": null,
   },
   Object {
+    "createdAt": "[date]",
+    "lastModifiedAt": "[date]",
     "name": "Moldy Guitar",
+    "removedAt": null,
   },
   Object {
+    "createdAt": "[date]",
+    "lastModifiedAt": "[date]",
     "name": "Cuddly Planet",
+    "removedAt": null,
   },
 ]
 `;

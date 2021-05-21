@@ -2,17 +2,59 @@ import { generateSlug } from "random-word-slugs";
 
 export class Participant {
   name: string;
-  // TODO: add createdAt, etc
+  createdAt: Date;
+  lastModifiedAt: Date;
+  removedAt: Date | null;
   constructor(opts: Partial<Participant>) {
+    // TODO: default name should probably be null.
     this.name = opts.name ?? "";
+    this.createdAt = opts.createdAt ?? new Date();
+    this.lastModifiedAt = opts.lastModifiedAt ?? new Date();
+    this.removedAt = opts.removedAt ?? null;
+  }
+
+  static makeRandom() {
+    return new Participant({
+      name: generateSlug(2, { format: "title" }),
+    });
   }
 }
 
-export const makeRandomParticipant = (): Participant => ({
-  name: generateSlug(2, { format: "title" }),
-});
-
-export type Match = [winnerIndex: number, loserIndex: number, pending: boolean];
+/**
+ * A pending or completed match in a Bracket. A null participant field means
+ * that a previous match hasn't been reported to determine the winner that will
+ * proceed to this match.
+ */
+export class Match {
+  /**
+   * First participant. If pending is false, this is the winner.
+   */
+  participant1: number | null;
+  /**
+   * Second participant. If pending is false, this is the loser.
+   */
+  participant2: number | null;
+  /**
+   * If true, this is a yet-to-be-played match; otherwise, it is a match with a
+   * winner and a loser.
+   */
+  pending: boolean;
+  constructor(
+    participant1?: number | null,
+    participant2?: number | null,
+    pending = true
+  ) {
+    if (!pending && !(participant1 != null && participant2 != null)) {
+      console.log("values:", participant1, participant2, pending);
+      throw new Error(
+        "Match without both participants must have pending set to true."
+      );
+    }
+    this.participant1 = participant1 ?? null;
+    this.participant2 = participant2 ?? null;
+    this.pending = pending;
+  }
+}
 
 export class Bracket {
   name: string;
@@ -43,7 +85,7 @@ export class Bracket {
 
   /**
    * If we start the tournament with the current number of participants, how
-   * many rounds will it last?
+   * many rounds will it last? Integer ceiling of log_2(this.participants.length)
    */
   computeTotalRounds() {
     const np = this.participants.length;
@@ -63,43 +105,12 @@ export class Bracket {
     if (roundMatches == undefined) {
       return -1;
     }
-    return roundMatches.findIndex(([winner, loser]) => {
-      return (p1 == winner && p2 == loser) || (p2 == winner && p1 == loser);
-    });
+    return roundMatches.findIndex(
+      ({ participant1: winner, participant2: loser }: Match) => {
+        return (p1 == winner && p2 == loser) || (p2 == winner && p1 == loser);
+      }
+    );
   }
-
-  /**
-   * In how many matches has each participant index appeared?
-   *
-   * TODO: instead return Map(participant => [wins, losses]) like countMatches.
-   */
-  // countAllMatches() {
-  //   let counts = this.participants.map(() => 0);
-  //   this.matches.values().forEach(([winner, loser]) => {
-  //     counts[winner] += 1;
-  //     counts[loser] += 1;
-  //   });
-
-  //   return counts;
-  // }
-
-  // /**
-  //  * Compute [wins, losses] for each participant argument.
-  //  */
-  // countMatches(...pIndices: number[]) {
-  //   let counts = new Map<number, [number, number]>(
-  //     // Initialize a map with 0 wins, 0 losses for each participant index.
-  //     pIndices.map((p) => [p, [0, 0]])
-  //   );
-  //   this.matches.forEach(([winner, loser]) => {
-  //     const wCount = counts.get(winner);
-  //     if (wCount != undefined) wCount[0] += 1;
-  //     const lCount = counts.get(loser);
-  //     if (lCount != undefined) lCount[1] += 1;
-  //   });
-
-  //   return counts;
-  // }
 
   /**
    * In which (0-indexed!) round would a hypothetical match between these two participant
@@ -122,7 +133,7 @@ export class Bracket {
       return 0;
     }
 
-    const r = this.computeTotalRounds() - 1; // Subtract 1 to get 0-indexed answer.
+    const r = this.computeTotalRounds() - 1;
     for (let i = r; i >= 0; i -= 1) {
       const pow = Math.pow(2, i);
       const sideOfP1 = Math.floor(p1 / pow);
@@ -135,18 +146,34 @@ export class Bracket {
   }
 
   /**
-   * Does our Map of matches have a non-pending match for this participant in this round?
+   * Does our Map of matches have a match for this participant in this round?
+   *
+   * @param round
+   *   Key of this.matches to check.
+   * @param participantIndex
+   *   Index [0, ..., this.participants.length - 1] of participant in
+   *   this.participants.
+   * @param includePending
+   *   If true, return true if match is pending. Otherwise, pending matches
+   *   don't count.
    */
-  matchExists(round: number, participantIndex: number) {
+  matchExists(
+    round: number,
+    participantIndex: number,
+    includePending: boolean = false
+  ) {
     const roundMatches = this.matches.get(round);
     if (roundMatches == undefined) {
       return false;
     }
-    return roundMatches.some(([winner, loser, pending]) => {
-      return (
-        !pending && (participantIndex == winner || participantIndex == loser)
-      );
-    });
+    return roundMatches.some(
+      ({ participant1: winner, participant2: loser, pending }: Match) => {
+        return (
+          (includePending || !pending) &&
+          (participantIndex == winner || participantIndex == loser)
+        );
+      }
+    );
   }
 
   /**
@@ -157,16 +184,18 @@ export class Bracket {
     if (roundMatches == undefined) {
       return false;
     }
-    return roundMatches.some(([winner, loser, pending]) => {
+    return roundMatches.some(({ participant1: winner, pending }: Match) => {
       return !pending && participantIndex == winner;
     });
   }
 
   /**
    * Given the current Map of matches, have both of this match's participants
-   * won the right number of rounds to meet each other?
+   * won the necessary rounds to meet each other? If either participant is null,
+   * we say that the match is valid.
    */
-  matchIsValid([winner, loser, pending]: Match) {
+  matchIsValid({ participant1: winner, participant2: loser }: Match) {
+    if (winner == null || loser == null) return true;
     if (winner < 0 || loser < 0 || winner == loser) return false;
 
     const computedRound = this.computeMatchRound(winner, loser);
@@ -196,13 +225,19 @@ export class Bracket {
    * that have already been played. First, add a pending match, then call
    * reportMatch.
    */
-  pushMatch(match: Match) {
-    const [p1, p2, pending] = match;
-    if (!pending) {
-      throw new Error("Can't add a non-pending match with pushMatch.");
+  pushPendingMatch(match: Match, round: number) {
+    if (!this.finalizedAt) {
+      throw new Error(
+        "Can't push pending match to bracket that hasn't been finalized."
+      );
     }
-    const round = this.computeMatchRound(p1, p2);
+    // const { participant1: p1, participant2: p2, pending } = match;
+    if (!pending) {
+      throw new Error("Can't add a non-pending match with pushPendingMatch.");
+    }
+    // const round = this.computeMatchRound(p1, p2);
     if (!this.matchIsValid(match)) {
+      // TODO: matchIsValid should really tell us why a match isn't valid.
       throw new Error(`Can't push invalid match: ${match}`);
     }
     const roundMatches = this.matches.get(round);
@@ -216,47 +251,63 @@ export class Bracket {
   /**
    * Update a pending match with the actual results of the match, after
    * checking that this operation is valid.
+   *
+   * @param match
+   *   The match to report. Note: `pending` will be set to false, regardless of
+   *   value of match[2].
    */
   reportMatch(match: Match) {
-    const [p1, p2, _] = match;
+    if (!this.finalizedAt) {
+      throw new Error(
+        "Can't push match result to bracket that hasn't been finalized."
+      );
+    }
+
+    const { participant1: p1, participant2: p2 } = match;
+    if (p1 == null || p2 == null) {
+      throw new Error(
+        "Reporting a match requires both participants to be defined."
+      );
+    }
     const computedRound = this.computeMatchRound(p1, p2);
-    // if (pending) {
-    //   const err =
-    //     "Can't call reportMatch with a pending match. First pass this match to pushMatch.";
-    //   throw new Error(err);
-    // }
     const existingMatchIndex = this.findMatch(p1, p2, computedRound);
+
     if (existingMatchIndex == -1) {
       const err = `Pending match not found in round ${computedRound} for participants ${p1} and ${p2}`;
       throw new Error(err);
     }
+
     const roundMatches = this.matches.get(computedRound);
     if (roundMatches == undefined) {
       // TODO: this check is probably not necessary, since we just called
       // findMatch and it succeeded.
       throw new Error(`Error finding match ${match} in round ${computedRound}`);
     }
+
     const existingMatch = roundMatches[existingMatchIndex];
-    const [, , ePending] = existingMatch;
+    const { pending: ePending } = existingMatch;
     if (!ePending) {
       throw new Error(
         `Can't report match: match ${existingMatch} in round ${computedRound} is already reported.`
       );
     }
 
-    existingMatch[0] = match[0];
-    existingMatch[1] = match[1];
-    existingMatch[2] = false; // Set pending to false.
+    Object.assign(existingMatch, { ...match, pending: false });
   }
 
   /**
-   * Validate that this bracket is ready to be finalized. If validateOnly is
-   * false, set finalizedAt.
+   * Validate that this bracket is ready to be finalized, meaning that we're
+   * ready to start pushing match results.
+   *
+   * @param validateOnly
+   *   Just check that this bracket is ready to be finalized. Don't actually
+   *   set finalizedAt.
    */
   finalize(validateOnly = false) {
     if (this.finalizedAt) {
       return; // TODO: should this throw?
     }
+
     const nParticipants = this.participants.length;
     const lp = Math.log2(nParticipants);
     if (!Number.isInteger(lp)) {
@@ -272,5 +323,16 @@ export class Bracket {
     }
 
     this.finalizedAt = new Date();
+  }
+
+  /**
+   * Unset finalizedAt and clear all matches.
+   */
+  unfinalize() {
+    if (!this.finalizedAt) {
+      throw new Error("Can't unfinalize a bracket that isn't finalized.");
+    }
+    this.finalizedAt = null;
+    this.matches = new Map();
   }
 }

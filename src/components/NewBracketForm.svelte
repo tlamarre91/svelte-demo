@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { slide } from "svelte/transition";
+  import { SLIDE_DURATION } from "@/constants";
   import { goto } from "@sapper/app";
   import { postJson } from "@/util";
   import { Bracket, Participant } from "@/model";
@@ -11,8 +13,16 @@
   export let generateParticipants = false;
   export let useRandomSlug = true;
   export let slug = "";
-  export let error = ""; // TODO: show errors
+  let nameError = "";
+  let showError: boolean;
+  $: showError = nameError.length > 0 && name.length == 0;
+
   async function save() {
+    if (!(name.length > 0)) {
+      nameError = "Please provide a name";
+      return;
+    }
+    nameError = "";
     const body = JSON.stringify({
       name,
       generateParticipants,
@@ -33,6 +43,14 @@
 <form on:submit|preventDefault={save}>
   <div class="field">
     <TextInput bind:value={name} placeholder="New bracket name" />
+      {#if showError}
+        <div
+          class="has-text-danger"
+          transition:slide={{ duration: SLIDE_DURATION }}
+        >
+          {nameError}
+        </div>
+      {/if}
   </div>
   <div class="field">
     <Checkbox
